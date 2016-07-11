@@ -11,6 +11,9 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #endif
+#ifdef Q_OS_LINUX
+#include <linux/in6.h>
+#endif
 
 #include "Connection.h"
 #include "Message.h"
@@ -39,6 +42,10 @@ Connection::Connection(QObject *p, QSslSocket *qtsSock) : QObject(p) {
 	connect(qtsSocket, SIGNAL(readyRead()), this, SLOT(socketRead()));
 	connect(qtsSocket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
 	connect(qtsSocket, SIGNAL(sslErrors(const QList<QSslError> &)), this, SLOT(socketSslErrors(const QList<QSslError> &)));
+#ifdef Q_OS_LINUX
+	int opt = IPV6_PREFER_SRC_PUBLIC;
+	setsockopt(qtsSocket->socketDescriptor(), IPPROTO_IPV6, IPV6_ADDR_PREFERENCES, &opt, sizeof(opt));
+#endif
 	qtLastPacket.restart();
 #ifdef Q_OS_WIN
 	dwFlow = 0;
